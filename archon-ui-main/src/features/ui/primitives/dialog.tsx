@@ -41,8 +41,9 @@ export const DialogContent = React.forwardRef<
       ref={ref}
       className={cn(
         "fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2",
-        "p-6 rounded-md backdrop-blur-md",
-        "w-full max-w-2xl",
+        "rounded-md backdrop-blur-md",
+        "w-full max-w-2xl max-h-[90vh]",
+        "overflow-hidden",
         // Matching original glassmorphism
         "bg-gradient-to-b from-white/80 to-white/60 dark:from-white/10 dark:to-black/30",
         "border border-gray-200 dark:border-zinc-800/50",
@@ -62,7 +63,9 @@ export const DialogContent = React.forwardRef<
       )}
       {...props}
     >
-      <div className="relative z-10">{children}</div>
+      <div className="p-6 relative z-10 overflow-y-auto max-h-full">
+        {children}
+      </div>
       {showCloseButton && (
         <DialogPrimitive.Close
           className={cn(
