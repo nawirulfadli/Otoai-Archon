@@ -1,0 +1,102 @@
+{
+  "mcp_client_updated_config": {
+    "parameters": {
+      "endpointUrl": "http://116.193.190.118:8051/mcp",
+      "serverTransport": "httpStreamable",
+      "include": "selected",
+      "includeTools": [
+        "rag_get_available_sources",
+        "search_automotive_insights",
+        "determine_automotive_search_strategy",
+        "get_automotive_sales_insights", 
+        "search_automotive_reviews",
+        "get_brand_comparison_insights",
+        "get_automotive_maintenance_tips"
+      ],
+      "options": {}
+    },
+    "tool_descriptions": {
+      "rag_get_available_sources": "Mendapatkan daftar sumber data yang tersedia di knowledge base MCP",
+      "search_automotive_insights": "🔍 FALLBACK: Gunakan HANYA jika PGVector RAG tidak cukup. Untuk insights otomotif eksternal: berita, review, tips, trend pasar. Frame dengan 'Berdasarkan informasi umum di industri otomotif...'",
+      "determine_automotive_search_strategy": "🧠 ROUTING: Menentukan strategi pencarian yang tepat antara Internal RAG vs External MCP berdasarkan intent query",
+      "get_automotive_sales_insights": "💼 SALES SUPPORT: Untuk rekomendasi umum berdasarkan kategori kendaraan, budget, dan usage type. Gunakan saat customer butuh guidance pemilihan",
+      "search_automotive_reviews": "⭐ REVIEWS & OPINIONS: Untuk review expert dan user experience. Gunakan saat customer tanya 'bagaimana reviewnya?' atau perlu validasi pilihan",
+      "get_brand_comparison_insights": "🆚 BRAND COMPARISON: Untuk handling objection dan perbandingan brand. Gunakan saat customer bingung pilih antara 2 brand",
+      "get_automotive_maintenance_tips": "🔧 AFTER-SALES: Untuk tips perawatan dan maintenance. Gunakan saat customer tanya tentang perawatan kendaraan"
+    }
+  },
+  "pgvector_enhanced_description": {
+    "toolDescription": "🎯 SUMBER UTAMA OTOAI: Gunakan tool ini PERTAMA untuk semua pertanyaan terkait:\n• Katalog produk resmi (mobil, motor, spareparts)\n• Spesifikasi teknis dan fitur lengkap\n• Harga, promo, dan penawaran khusus\n• Data inventory dan ketersediaan\n• Informasi dealer dan financing\n• Dokumen resmi dan brosur\n\n⚡ PRIORITAS TINGGI: Selalu cari di sini dulu sebelum menggunakan MCP tools!\n\n🔄 FALLBACK: Jika MCP tidak memberikan hasil memadai, gunakan tool ini lagi dengan query yang lebih broad."
+  },
+  "testing_queries": {
+    "catalog_priority": [
+      "Berapa harga Honda Civic 2024?",
+      "Spesifikasi Toyota Camry Hybrid lengkap",
+      "Ada promo DP 0% untuk SUV bulan ini?",
+      "Motor Yamaha NMAX tersedia di dealer Jakarta?",
+      "Cicilan Honda CR-V berapa per bulan?",
+      "Fitur safety Toyota RAV4 apa saja?"
+    ],
+    "mcp_fallback": [
+      "Bagaimana review Honda Civic dari expert otomotif?",
+      "Tips perawatan mesin hybrid yang benar",
+      "Honda vs Toyota mana yang lebih bagus untuk keluarga?",
+      "Trend pasar mobil listrik di Indonesia 2024",
+      "Masalah umum yang sering terjadi di SUV",
+      "Award mobil terbaik tahun ini apa saja?"
+    ],
+    "hybrid_usage": [
+      "Saya mau beli SUV budget 400 juta, ada rekomendasi dan reviewnya?",
+      "Mazda CX-5 vs Honda CR-V, perbandingan harga dan review",
+      "Mobil keluarga yang irit BBM, reliable, dan punya review bagus",
+      "Motor sport 250cc terbaik, harga dan pengalaman user",
+      "Mobil listrik murah di Indonesia, spek dan review pengguna"
+    ]
+  },
+  "conversation_flow_examples": {
+    "sales_scenario_1": {
+      "user_query": "Saya mau cari SUV budget 400 jutaan untuk keluarga",
+      "expected_flow": [
+        "1. PGVector RAG: Cari SUV 350-450 juta (katalog resmi)",
+        "2. MCP get_automotive_sales_insights: Rekomendasi umum SUV keluarga",
+        "3. Response: Gabungan katalog + insights industri"
+      ]
+    },
+    "objection_handling": {
+      "user_query": "Honda vs Toyota mana yang lebih bagus?", 
+      "expected_flow": [
+        "1. MCP get_brand_comparison_insights: Perbandingan Honda vs Toyota",
+        "2. PGVector RAG: Model spesifik Honda vs Toyota dari katalog",
+        "3. Response: Perbandingan dengan framing 'Di media otomotif...'"
+      ]
+    },
+    "after_sales": {
+      "user_query": "Kalau beli Honda CR-V, perawatannya gimana?",
+      "expected_flow": [
+        "1. PGVector RAG: Info service resmi Honda CR-V",
+        "2. MCP get_automotive_maintenance_tips: Tips perawatan SUV",
+        "3. Response: Official info + expert tips"
+      ]
+    }
+  },
+  "implementation_checklist": {
+    "immediate_actions": [
+      "✅ Update MCP Client includeTools dengan 7 tools baru",
+      "✅ Test koneksi ke MCP server (http://116.193.190.118:8051/mcp)",
+      "✅ Verify semua tools available dan berfungsi",
+      "✅ Test dengan sample queries"
+    ],
+    "optional_enhancements": [
+      "🔄 Update PGVector tool description",
+      "🔄 Add query intent analyzer node",
+      "🔄 Enhanced error handling dan logging",
+      "🔄 Monitoring tool usage patterns"
+    ],
+    "data_preparation": [
+      "📊 Ensure PGVector memiliki catalog data lengkap",
+      "🌐 Crawl automotive sources untuk MCP knowledge base",
+      "🔍 Verify data quality dan relevance",
+      "📈 Monitor search result accuracy"
+    ]
+  }
+}

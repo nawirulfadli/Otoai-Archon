@@ -1,0 +1,507 @@
+{
+  "name": "OTOAI-Chatbot-Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "model": "gpt-4.1",
+        "options": {}
+      },
+      "id": "caf27065-1a36-40da-a600-24d2d044c1c0",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        304
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "Tbr0wDUWjMmJFTW9",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Agent Tools for Internal RAG Catalog ",
+        "height": 528.85546469693,
+        "width": 583.4552380860637,
+        "color": 4
+      },
+      "id": "15d4024d-635c-4d01-a4a2-6a37bdcc47f8",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        496,
+        -64
+      ]
+    },
+    {
+      "parameters": {
+        "tableName": "n8n_chat_memory"
+      },
+      "id": "8e2b090b-faff-44c0-9911-4f3352565e81",
+      "name": "Postgres Chat Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1,
+      "position": [
+        -112,
+        304
+      ],
+      "notesInFlow": false,
+      "credentials": {
+        "postgres": {
+          "id": "sue8gKZHjqTbqCjF",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## RAG AI Agent with Chat Interface",
+        "height": 464.8027193303974,
+        "width": 1035.6381264595484
+      },
+      "id": "8e833847-1c21-47bc-adfa-a5eb1957e2ff",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -544,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "e0eb8d5b-b2b5-482d-95aa-e4cebc4de22b",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        320,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9a9a245e-f1a1-4282-bb02-a81ffe629f0f",
+              "name": "chatInput",
+              "value": "={{ $json?.chatInput || $json.body.chatInput }}",
+              "type": "string"
+            },
+            {
+              "id": "b80831d8-c653-4203-8706-adedfdb98f77",
+              "name": "sessionId",
+              "value": "={{ $json?.sessionId || $json.body.sessionId}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "238dd85a-1d09-41c4-b64c-809d7619eac6",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -240,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "ab572538-ad50-4ac0-9f58-82bf39462ca5",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -512,
+        80
+      ],
+      "webhookId": "e104e40e-6134-4825-a6f0-8a646d882662"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "otoai-chat",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "e0b216ea-5206-4fab-9ddd-14a95c4f72fd",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -512,
+        288
+      ],
+      "webhookId": "bf4dd093-bb02-472c-9454-7ab9af97bd1d",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "LdqMuqKWe2DzdkCL",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "=# System Prompt OtoAI (AI Automotive Sales + Hybrid RAG/MCP Agent)\n\n## 🎭 Role\nAnda adalah **OtoAI**, AI Automotive Sales Assistant yang ramah, informatif, dan proaktif.  \nFokus utama Anda adalah membantu pelanggan di Indonesia menemukan mobil atau motor sesuai profil kebutuhan, budget, dan preferensi mereka.  \n\nAnda juga berperan sebagai **Hybrid RAG Agent**, dengan prioritas sumber:  \n1. **PGVector RAG (sumber utama)** → katalog produk resmi (spesifikasi, harga, promo, dokumen).  \n2. **MCP Tools (fallback/pendukung)** → berita, artikel review, tips otomotif, atau informasi eksternal lain. Jika MCP tidak dapat memberikan jawaban relevan, gunakan PGVector RAG sebagai fallback.\n\n---\n\n## ⚡ Aturan Penggunaan RAG + MCP\n1. **Selalu mulai pencarian dari PGVector RAG** (`documents`, `document_metadata`, `document_rows`).  \n2. Untuk pertanyaan berbasis teks → lakukan lookup di `documents`.  \n3. Untuk pertanyaan numerik/tabulasi → gunakan query SQL di `document_rows`.  \n4. Jika hasil dari RAG masih minim atau tidak cukup →  \n   - Eksplorasi dokumen lain di `document_metadata`.  \n   - Jika tetap kurang → gunakan MCP untuk melengkapi.  \n   - **Gunakan MCP hanya jika PGVector RAG tidak cukup relevan. Jika MCP juga tidak memberikan data yang memadai, gunakan kembali PGVector RAG sebagai fallback untuk memastikan jawaban tetap ada.**  \n   - Saat gunakan MCP, framing dengan jelas, misalnya:  \n     - "Berdasarkan informasi umum di industri…"  \n     - "Di media otomotif, model ini biasanya dikenal dengan …"  \n5. Gabungkan hasil dari RAG + MCP jika relevan, agar lebih komprehensif.  \n6. Jangan pernah mengatakan "tidak ada data". Jika MCP kosong, gunakan RAG; jika RAG kosong, gunakan LLM dengan validasi.\n\n---\n\n## 🗣️ Gaya Komunikasi\n- Gunakan **Bahasa Indonesia informal & sopan**.  \n- Hindari jargon teknis berlebihan.  \n- Gunakan emoji ramah (🚗✅⚡).  \n- Tunjukkan antusiasme seperti sales assistant manusia.  \n\nContoh:  \n_\"Mazda CX-5 itu ngebut banget, Pak! Cocok buat Bapak yang suka road trip.\"_  \n\n---\n\n## 📝 Struktur Interaksi\n\n### 1. Salam Pembuka\n- "Halo! Selamat datang di otoai.id 🚗. Saya OtoAI, asisten virtual Anda. Lagi cari mobil atau motor apa nih?"  \n\n### 2. Identifikasi Kebutuhan\n- Budget: "Berapa kisaran budget yang Anda siapkan?"  \n- Tipe: "SUV, MPV, hatchback, sedan, motor, atau mobil listrik?"  \n- Penggunaan: "Untuk harian, keluarga, atau perjalanan jauh?"  \n- Prioritas: "Apa yang paling penting? (irit BBM, kapasitas besar, teknologi, ramah lingkungan, dll.)"  \n\n### 3. Rekomendasi Mobil/Motor\nBerikan **3 opsi terbaik** sesuai profil. Format:  \n1. [Nama Mobil/Motor] – [Harga]  \n   ✅ Keunggulan: …  \n   ⚠️ Pertimbangan: …  \n\nJika user bingung → buat perbandingan singkat antar model.  \n\n### 4. Informasi Tambahan\n- Promo/DP: "Ada promo DP 10% atau diskon Rp XX juta."  \n- Kredit: "Mau saya bantu hitungkan cicilan per bulan?"  \n- Test Drive: "Ingin jadwalkan test drive di dealer terdekat?"  \n\n### 5. Handling Objection / FAQ\n- Harga mahal → tawarkan alternatif lebih hemat.  \n- Brand comparison → jelaskan plus-minus.  \n- Listrik vs bensin → sebutkan keuntungan & keterbatasan.  \n\n### 6. Penutup (Call to Action)\n- "Ada lagi yang bisa saya bantu? 🚗"  \n- "Mau saya hubungkan dengan sales executive?"  \n- "Kalau oke, saya bisa kirimkan brosur & price list ke email/WhatsApp Anda."  \n"
+        }
+      },
+      "id": "17810532-7ebd-4aae-a390-09167cf09299",
+      "name": "RAG AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        -32,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Use this tool to fetch all available documents, including the table schema if the file is a CSV or Excel file.",
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "document_metadata",
+          "mode": "list",
+          "cachedResultName": "document_metadata"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.5,
+      "position": [
+        0,
+        304
+      ],
+      "id": "b7f1de66-928e-4ca7-9702-0697e9f90103",
+      "name": "List Documents",
+      "credentials": {
+        "postgres": {
+          "id": "sue8gKZHjqTbqCjF",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Given a file ID, fetches the text from the document.",
+        "operation": "executeQuery",
+        "query": "SELECT \n    string_agg(content, ' ') as document_text\nFROM documents\n  WHERE metadata->>'file_id' = $1\nGROUP BY metadata->>'file_id';",
+        "options": {
+          "queryReplacement": "={{ $fromAI('file_id') }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.5,
+      "position": [
+        112,
+        304
+      ],
+      "id": "0e599437-425a-4d95-818f-a6d474e6008d",
+      "name": "Get File Contents",
+      "credentials": {
+        "postgres": {
+          "id": "sue8gKZHjqTbqCjF",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Run a SQL query - use this to query from the document_rows table once you know the file ID you are querying. dataset_id is the file_id and you are always using the row_data for filtering, which is a jsonb field that has all the keys from the file schema given in the document_metadata table.\n\nExample query:\n\nSELECT AVG((row_data->>'revenue')::numeric)\nFROM document_rows\nWHERE dataset_id = '123';\n\nExample query 2:\n\nSELECT \n    row_data->>'category' as category,\n    SUM((row_data->>'sales')::numeric) as total_sales\nFROM dataset_rows\nWHERE dataset_id = '123'\nGROUP BY row_data->>'category';",
+        "operation": "executeQuery",
+        "query": "{{ $fromAI('sql_query') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.5,
+      "position": [
+        224,
+        304
+      ],
+      "id": "08ca519d-55a9-4d32-8556-0f5834c62d1e",
+      "name": "Query Document Rows",
+      "credentials": {
+        "postgres": {
+          "id": "sue8gKZHjqTbqCjF",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "topN": 4
+      },
+      "type": "@n8n/n8n-nodes-langchain.rerankerCohere",
+      "typeVersion": 1,
+      "position": [
+        832,
+        288
+      ],
+      "id": "d058e468-3326-4dc4-b796-b6b4c3c8fe81",
+      "name": "Reranker Cohere",
+      "credentials": {
+        "cohereApi": {
+          "id": "F5NbAWF3T8qCTjDd",
+          "name": "CohereApi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Gunakan tool ini sebagai sumber utama untuk semua pertanyaan terkait mobil atau motor, \nkatalog produk resmi, spesifikasi, harga, promo, dan dokumen. \nSelalu cari jawaban di sini terlebih dahulu sebelum menggunakan tool lain.",
+        "tableName": "=documents",
+        "topK": 15,
+        "useReranker": true,
+        "options": {
+          "columnNames": {
+            "values": {
+              "contentColumnName": "content"
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePGVector",
+      "typeVersion": 1.3,
+      "position": [
+        704,
+        80
+      ],
+      "id": "e269176a-3870-499b-a860-d8d2748b599b",
+      "name": "Postgres PGVector Store",
+      "credentials": {
+        "postgres": {
+          "id": "sue8gKZHjqTbqCjF",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        640,
+        288
+      ],
+      "id": "c2904ce8-f017-4caa-9d65-389ab37f3c7e",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "Tbr0wDUWjMmJFTW9",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "endpointUrl": "http://116.193.190.118:8051/mcp",
+        "serverTransport": "httpStreamable",
+        "include": "selected",
+        "includeTools": [
+          "rag_get_available_sources",
+          "rag_search_knowledge_base"
+        ],
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.1,
+      "position": [
+        368,
+        304
+      ],
+      "id": "ffa104e6-7250-478a-9068-4748f7bba86b",
+      "name": "MCP Client"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "RAG AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "RAG AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "RAG AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RAG AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Documents": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get File Contents": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Document Rows": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reranker Cohere": {
+      "ai_reranker": [
+        [
+          {
+            "node": "Postgres PGVector Store",
+            "type": "ai_reranker",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Postgres PGVector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres PGVector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP Client": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "cbfa21ca-47c0-4d40-9d26-bf27174559e4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5b2b023f3d5973eb33a459c32181dec4f57dd88e6fa517bda05ce690536a516b"
+  },
+  "id": "MJOKP0m6FD1h1SIY",
+  "tags": [
+    {
+      "createdAt": "2025-07-19T09:51:01.860Z",
+      "updatedAt": "2025-07-19T09:51:01.860Z",
+      "id": "LGhSX0vDzcJFVh0B",
+      "name": "Agent"
+    }
+  ]
+}
